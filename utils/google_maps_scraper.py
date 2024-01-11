@@ -117,6 +117,7 @@ class GoogleMaps:
         print_lock: Lock = None,
         result_range: int = None,
         stop_event: Event = Event(),
+        do_additional_search: bool = False,
     ) -> None:
         """
         Initialize the GoogleMaps scraper instance.
@@ -153,6 +154,7 @@ class GoogleMaps:
         self._print = PPrints(print_lock=print_lock)
         self._driver_path = driver_path
         self._stop_event = stop_event
+        self._do_additional_search = do_additional_search
 
         # Create path if not available
         self.is_path_available()
@@ -756,16 +758,17 @@ class GoogleMaps:
         card_website_link = self.get_website_link(driver)
 
         # get website data
-        if self._verbose:
-            self._print.print_with_lock(
-                query=query,
-                status="Getting WebLink Data",
-                mode=mode,
-                results_indices=results_indices,
+        if self._do_additional_search:
+            if self._verbose:
+                self._print.print_with_lock(
+                    query=query,
+                    status="Getting WebLink Data",
+                    mode=mode,
+                    results_indices=results_indices,
+                )
+            website_data = self._web_pattern_scraper.find_patterns(
+                driver, card_website_link, self._suggested_ext, self._unavailable_text
             )
-        website_data = self._web_pattern_scraper.find_patterns(
-            driver, card_website_link, self._suggested_ext, self._unavailable_text
-        )
 
         # get phone number
         if self._verbose:

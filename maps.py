@@ -61,8 +61,9 @@ class GMapsScraper:
         )
         parser.add_argument(
             "-das",
-            "--disable-additional-search",
-            help="Disable additional search",
+            "--do-additional-search",
+            help="Do additional search. If disabled the script will not search for additional information and will "
+                 "ignore -se option (default: True)",
             action="append",
             default=False,
         )
@@ -186,7 +187,7 @@ class GMapsScraper:
             result_range=limit_results,
             verbose=self._args.verbose,
             driver_path=driver_path,
-            disable_additional_search=self._args.disable_additional_search,
+            do_additional_search=self._args.do_additional_search,
         )
 
         algo_obj.fast_search_algorithm(queries_list)

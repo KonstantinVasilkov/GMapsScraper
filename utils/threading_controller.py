@@ -18,6 +18,7 @@ class FastSearchAlgo:
         result_range: int = None,
         workers: int = 1,
         verbose: bool = True,
+        do_additional_search: bool = False,
     ) -> None:
         if suggested_ext is None:
             suggested_ext = ["contact-us", "contact"]
@@ -37,6 +38,7 @@ class FastSearchAlgo:
         self._print_lock = Lock()
         self._thread_stop_event = Event()
         self._executor = ThreadPoolExecutor(max_workers=self._workers)
+        self._do_additional_search = do_additional_search
         super().__init__()
 
     def signal_handler(self, sig, frame):
@@ -84,6 +86,7 @@ class FastSearchAlgo:
             verbose=self._verbose,
             driver_path=self._driver_path,
             stop_event=self._thread_stop_event,
+            do_additional_search=self._do_additional_search,
         )
 
         range_calculation = query_list_range / self._workers
