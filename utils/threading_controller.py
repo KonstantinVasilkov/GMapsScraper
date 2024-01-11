@@ -1,14 +1,24 @@
 from atexit import register
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock, Event
-from signal import signal, SIGINT, SIGTERM
+from signal import SIGINT, SIGTERM, signal
+from threading import Event, Lock
+
 from utils.google_maps_scraper import GoogleMaps
 
 
 class FastSearchAlgo:
-    def __init__(self, driver_path: str, unavailable_text: str = "Not Available", headless: bool = False, wait_time: int = 15,
-                 suggested_ext: list = None, output_path: str = "./CSV_FILES", result_range: int = None,
-                 workers: int = 1, verbose: bool = True) -> None:
+    def __init__(
+        self,
+        driver_path: str,
+        unavailable_text: str = "Not Available",
+        headless: bool = False,
+        wait_time: int = 15,
+        suggested_ext: list = None,
+        output_path: str = "./CSV_FILES",
+        result_range: int = None,
+        workers: int = 1,
+        verbose: bool = True,
+    ) -> None:
         if suggested_ext is None:
             suggested_ext = ["contact-us", "contact"]
 
@@ -30,7 +40,7 @@ class FastSearchAlgo:
         super().__init__()
 
     def signal_handler(self, sig, frame):
-        print('[+] Exiting and releasing memory')
+        print("[+] Exiting and releasing memory")
         self._thread_stop_event.set()
         self._executor.shutdown(wait=False)  # Shut down threads immediately
 
@@ -41,7 +51,9 @@ class FastSearchAlgo:
 
         futures = []
         for thread_index in range(self._workers):
-            future = self._executor.submit(self._start_scrapper_threads, thread_index, query_list_range)
+            future = self._executor.submit(
+                self._start_scrapper_threads, thread_index, query_list_range
+            )
             futures.append(future)
 
         register(self.signal_handler, SIGTERM, None)
@@ -61,13 +73,18 @@ class FastSearchAlgo:
     """
 
     def _start_scrapper_threads(self, thread_id: int, query_list_range: int) -> None:
-        maps_obj = GoogleMaps(unavailable_text=self._unavailable_text, headless=self._headless,
-                              wait_time=self._wait_time,
-                              suggested_ext=self._suggested_ext, output_path=self._output_path,
-                              print_lock=self._print_lock,
-                              result_range=self._result_range, verbose=self._verbose,
-                              driver_path=self._driver_path,
-                              stop_event=self._thread_stop_event)
+        maps_obj = GoogleMaps(
+            unavailable_text=self._unavailable_text,
+            headless=self._headless,
+            wait_time=self._wait_time,
+            suggested_ext=self._suggested_ext,
+            output_path=self._output_path,
+            print_lock=self._print_lock,
+            result_range=self._result_range,
+            verbose=self._verbose,
+            driver_path=self._driver_path,
+            stop_event=self._thread_stop_event,
+        )
 
         range_calculation = query_list_range / self._workers
         thread_start = thread_id * int(range_calculation)

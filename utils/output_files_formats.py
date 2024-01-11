@@ -1,6 +1,6 @@
-from threading import Lock
 from csv import DictWriter
 from os.path import isfile
+from threading import Lock
 
 
 class CSVCreator:
@@ -16,11 +16,25 @@ class CSVCreator:
                 _isheader_file = True
 
             if _isheader_file:
-                file_handler = open(self._output_path + "/" + file_name, "w", newline="", encoding="utf-8-sig")
+                file_handler = open(
+                    self._output_path + "/" + file_name,
+                    "w",
+                    newline="",
+                    encoding="utf-8-sig",
+                )
             else:
-                file_handler = open(self._output_path + "/" + file_name, "a", newline="", encoding="utf-8-sig")
+                file_handler = open(
+                    self._output_path + "/" + file_name,
+                    "a",
+                    newline="",
+                    encoding="utf-8-sig",
+                )
 
-            writer = DictWriter(file_handler, fieldnames=list_of_dict_data[0].keys(), extrasaction='ignore')
+            writer = DictWriter(
+                file_handler,
+                fieldnames=list_of_dict_data[0].keys(),
+                extrasaction="ignore",
+            )
             if _isheader_file:
                 writer.writeheader()
 

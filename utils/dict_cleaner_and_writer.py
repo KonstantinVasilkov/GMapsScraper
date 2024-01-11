@@ -18,8 +18,9 @@ class DictCleaner:
 
         return unique_keys, repeating_keys
 
-    def _dict_cleaner(self, output_data_dict_list: list[dict], unique_keys: set, repeating_keys: set) -> list[dict]:
-
+    def _dict_cleaner(
+        self, output_data_dict_list: list[dict], unique_keys: set, repeating_keys: set
+    ) -> list[dict]:
         final_data = []
         for data_dict in output_data_dict_list:
             ordered_dict = OrderedDict()
@@ -37,4 +38,3 @@ class DictCleaner:
         unique_keys, repeating_keys = self._unique_repeating_sets(dict_list)
         cleaned_data_list = self._dict_cleaner(dict_list, unique_keys, repeating_keys)
         return cleaned_data_list
-

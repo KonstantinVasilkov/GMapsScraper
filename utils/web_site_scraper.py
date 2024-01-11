@@ -1,20 +1,23 @@
-from selenium.webdriver.chrome.webdriver import WebDriver
-from urllib.parse import urlparse
-from bs4 import BeautifulSoup
 from re import compile
+from urllib.parse import urlparse
+
+from bs4 import BeautifulSoup
+from selenium.webdriver.chrome.webdriver import WebDriver
+
 # from requests import head
 
 
 class PatternScrapper:
-
     def __init__(self):
         self._last_opened_handler = None
-        self._email_pattern = compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)*')
-        self._fb_pattern = compile(r'(?:https?://)?(?:www\.)?facebook\.com/\S+')
-        self._twitter_pattern = compile(r'(?:https?://)?(?:www\.)?twitter\.com/\S+')
-        self._insta_pattern = compile(r'(?:https?://)?(?:www\.)?instagram\.com/\S+')
-        self._youtube_pattern = compile(r'(?:https?://)?(?:www\.)?youtube\.com/\S+')
-        self._linkedin_pattern = compile(r'(?:https?://)?(?:www\.)?linkedin\.com/\S+')
+        self._email_pattern = compile(
+            r"([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)*"
+        )
+        self._fb_pattern = compile(r"(?:https?://)?(?:www\.)?facebook\.com/\S+")
+        self._twitter_pattern = compile(r"(?:https?://)?(?:www\.)?twitter\.com/\S+")
+        self._insta_pattern = compile(r"(?:https?://)?(?:www\.)?instagram\.com/\S+")
+        self._youtube_pattern = compile(r"(?:https?://)?(?:www\.)?youtube\.com/\S+")
+        self._linkedin_pattern = compile(r"(?:https?://)?(?:www\.)?linkedin\.com/\S+")
 
     """TO DO: Results not correct to some extend"""
     # @staticmethod
@@ -48,7 +51,9 @@ class PatternScrapper:
                 org_url = site_url + url
             else:
                 created_urls.append(site_url + url)
-                org_url = scheme + "://" + base_url + "/" + url  # https://www.google.com/about
+                org_url = (
+                    scheme + "://" + base_url + "/" + url
+                )  # https://www.google.com/about
 
             created_urls.append(org_url)
         return created_urls
@@ -57,7 +62,7 @@ class PatternScrapper:
         source_codes = []
 
         for url in urls:
-            driver.execute_script(f'''window.open("{url}", "_blank");''')
+            driver.execute_script(f"""window.open("{url}", "_blank");""")
             driver.switch_to.window(driver.window_handles[-1])
             source_codes.append(driver.page_source)
             driver.close()
@@ -70,15 +75,15 @@ class PatternScrapper:
         k = int(email[:2], 16)
 
         for i in range(2, len(email) - 1, 2):
-            decoded_mail += chr(int(email[i:i + 2], 16) ^ k)
+            decoded_mail += chr(int(email[i : i + 2], 16) ^ k)
 
         return decoded_mail
 
     def _href_emails(self, soup: BeautifulSoup) -> list:
         email_list = []
-        mail_tos = soup.select('a[href]')
+        mail_tos = soup.select("a[href]")
         for mail in mail_tos:
-            href = mail['href']
+            href = mail["href"]
             if "email-protect" in href:
                 email_list.append(self.email_decoder(href.split("#")[1]))
             elif "mailto" in href:
@@ -87,8 +92,14 @@ class PatternScrapper:
         return email_list
 
     def get_pattern_data(self, source_codes: list):
-        patterns_data = {"site_email": [], "facebook_links": [], "twitter_links": [], "instagram_links": [],
-                         "youtube_links": [], "linkedin_links": []}
+        patterns_data = {
+            "site_email": [],
+            "facebook_links": [],
+            "twitter_links": [],
+            "instagram_links": [],
+            "youtube_links": [],
+            "linkedin_links": [],
+        }
 
         for source in source_codes:
             soup = BeautifulSoup(source, features="lxml", parser="html.parser")
@@ -98,11 +109,21 @@ class PatternScrapper:
                 href_emails = self._href_emails(soup)
                 site_email.extend(href_emails)
 
-            facebook_links = [link['href'] for link in soup.find_all('a', href=self._fb_pattern)]
-            twitter_links = [link['href'] for link in soup.find_all('a', href=self._twitter_pattern)]
-            instagram_links = [link['href'] for link in soup.find_all('a', href=self._insta_pattern)]
-            youtube_links = [link['href'] for link in soup.find_all('a', href=self._youtube_pattern)]
-            linkedin_links = [link['href'] for link in soup.find_all('a', href=self._linkedin_pattern)]
+            facebook_links = [
+                link["href"] for link in soup.find_all("a", href=self._fb_pattern)
+            ]
+            twitter_links = [
+                link["href"] for link in soup.find_all("a", href=self._twitter_pattern)
+            ]
+            instagram_links = [
+                link["href"] for link in soup.find_all("a", href=self._insta_pattern)
+            ]
+            youtube_links = [
+                link["href"] for link in soup.find_all("a", href=self._youtube_pattern)
+            ]
+            linkedin_links = [
+                link["href"] for link in soup.find_all("a", href=self._linkedin_pattern)
+            ]
 
             patterns_data["site_email"].extend(site_email)
             patterns_data["facebook_links"].extend(facebook_links)
@@ -112,9 +133,21 @@ class PatternScrapper:
             patterns_data["linkedin_links"].extend(linkedin_links)
         return patterns_data
 
-    def find_patterns(self, driver: WebDriver, site_url: str, suggested_ext: list, unavailable: str = "Not Available"):
-        patterns_data = {"site_email": "", "facebook_links": "", "twitter_links": "", "instagram_links": "",
-                         "youtube_links": "", "linkedin_links": ""}
+    def find_patterns(
+        self,
+        driver: WebDriver,
+        site_url: str,
+        suggested_ext: list,
+        unavailable: str = "Not Available",
+    ):
+        patterns_data = {
+            "site_email": "",
+            "facebook_links": "",
+            "twitter_links": "",
+            "instagram_links": "",
+            "youtube_links": "",
+            "linkedin_links": "",
+        }
 
         if site_url == unavailable or suggested_ext == []:
             for key in patterns_data.keys():

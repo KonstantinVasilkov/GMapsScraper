@@ -1,27 +1,28 @@
-from selenium.webdriver import Chrome
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import (TimeoutException,
-                                        NoSuchElementException,
-                                        StaleElementReferenceException,
-                                        NoSuchWindowException)
-from selenium_stealth import stealth
-from random import choice
-from os.path import exists
 from os import mkdir
+from os.path import exists
+from random import choice
+from threading import Event, Lock
 from time import time
 
-from utils.web_site_scraper import PatternScrapper
+from selenium.common.exceptions import (NoSuchElementException,
+                                        NoSuchWindowException,
+                                        StaleElementReferenceException,
+                                        TimeoutException)
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium_stealth import stealth
+
 from utils.dict_cleaner_and_writer import DictCleaner
 from utils.output_files_formats import CSVCreator
 from utils.pprints import PPrints
 from utils.random_users import users
-from threading import Lock, Event
+from utils.web_site_scraper import PatternScrapper
 
 
 class GoogleMaps:
@@ -104,11 +105,19 @@ class GoogleMaps:
     _maps_url = "https://www.google.com/maps"
     _finger_print_defender_ext = "./extensions/finger_print_defender.crx"
 
-    def __init__(self, driver_path: str, unavailable_text: str = "Not Available", headless: bool = False,
-                 wait_time: int = 15, suggested_ext: list = None,
-                 output_path: str = "./CSV_FILES", verbose: bool = True,
-                 print_lock: Lock = None, result_range: int = None,
-                 stop_event: Event = Event()) -> None:
+    def __init__(
+        self,
+        driver_path: str,
+        unavailable_text: str = "Not Available",
+        headless: bool = False,
+        wait_time: int = 15,
+        suggested_ext: list = None,
+        output_path: str = "./CSV_FILES",
+        verbose: bool = True,
+        print_lock: Lock = None,
+        result_range: int = None,
+        stop_event: Event = Event(),
+    ) -> None:
         """
         Initialize the GoogleMaps scraper instance.
 
@@ -163,10 +172,12 @@ class GoogleMaps:
         """
 
         options = Options()
-        options.add_argument('--start-maximized')
-        options.add_argument('--disable-infobars')
-        options.add_experimental_option('useAutomationExtension', False)
-        options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
+        options.add_argument("--start-maximized")
+        options.add_argument("--disable-infobars")
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation", "enable-logging"]
+        )
 
         options.add_argument("--start-maximized")
         options.add_argument("--disable-infobars")
@@ -227,10 +238,13 @@ class GoogleMaps:
             webgl_vendor="Intel Inc.",
             renderer="Intel Iris OpenGL Engine",
             fix_hairline=True,
-            run_on_insecure_origins=False
+            run_on_insecure_origins=False,
         )
-        self._wait = WebDriverWait(driver, self._wait_time, ignored_exceptions=(NoSuchElementException,
-                                                                                StaleElementReferenceException))
+        self._wait = WebDriverWait(
+            driver,
+            self._wait_time,
+            ignored_exceptions=(NoSuchElementException, StaleElementReferenceException),
+        )
         return driver
 
     @staticmethod
@@ -248,11 +262,15 @@ class GoogleMaps:
         Perform a search query on Google Maps.
             :param query: The search query to perform.
         """
-        search_box = self._wait.until(EC.presence_of_element_located((By.ID, "searchboxinput")))
+        search_box = self._wait.until(
+            EC.presence_of_element_located((By.ID, "searchboxinput"))
+        )
         search_box.send_keys(query)
         search_box.send_keys(Keys.RETURN)
 
-    def validate_result_link(self, result: any, driver: WebDriver) -> tuple[str, str, str]:
+    def validate_result_link(
+        self, result: any, driver: WebDriver
+    ) -> tuple[str, str, str]:
         """
         Validate and process a search result link.
             :param result: The search result link element.
@@ -263,7 +281,7 @@ class GoogleMaps:
         if result != "continue":
             get_link = result.get_attribute("href")
 
-            driver.execute_script(f'''window.open("{get_link}", "_blank");''')
+            driver.execute_script(f"""window.open("{get_link}", "_blank");""")
             driver.switch_to.window(driver.window_handles[-1])
         else:
             get_link = driver.current_url
@@ -283,10 +301,17 @@ class GoogleMaps:
             :return: The cover image source URL.
         """
         try:
-            cover_image = self._wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="QA0Szd"]/div/div/div['
-                                                                                     '1]/div[2]/div/div['
-                                                                                     '1]/div/div/div[1]/div['
-                                                                                     '1]/button/img')))
+            cover_image = self._wait.until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        '//*[@id="QA0Szd"]/div/div/div['
+                        "1]/div[2]/div/div["
+                        "1]/div/div/div[1]/div["
+                        "1]/button/img",
+                    )
+                )
+            )
             cover_image_src = cover_image.get_attribute("src")
         except Exception:
             cover_image_src = self._unavailable_text
@@ -301,9 +326,12 @@ class GoogleMaps:
         """
 
         try:
-            title = driver.find_element(By.CSS_SELECTOR, '#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div > '
-                                                         'div.e07Vkf.kA9KIf > div > div > div.TIHn2 > div > '
-                                                         'div.lMbq3e > div:nth-child(1) > h1')
+            title = driver.find_element(
+                By.CSS_SELECTOR,
+                "#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div > "
+                "div.e07Vkf.kA9KIf > div > div > div.TIHn2 > div > "
+                "div.lMbq3e > div:nth-child(1) > h1",
+            )
             title_text = title.text
         except Exception:
             title_text = self._unavailable_text
@@ -318,10 +346,13 @@ class GoogleMaps:
         """
 
         try:
-            rating = driver.find_element(By.CSS_SELECTOR, '#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div '
-                                                          '> div.e07Vkf.kA9KIf > div > div > div.TIHn2 > div > '
-                                                          'div.lMbq3e > div.LBgpqf > div > div.fontBodyMedium.dmRWX > '
-                                                          'div.F7nice > span:nth-child(1) > span:nth-child(1)')
+            rating = driver.find_element(
+                By.CSS_SELECTOR,
+                "#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div "
+                "> div.e07Vkf.kA9KIf > div > div > div.TIHn2 > div > "
+                "div.lMbq3e > div.LBgpqf > div > div.fontBodyMedium.dmRWX > "
+                "div.F7nice > span:nth-child(1) > span:nth-child(1)",
+            )
             rating_text = rating.text
         except Exception:
             rating_text = self._unavailable_text
@@ -336,10 +367,11 @@ class GoogleMaps:
         """
 
         try:
-            price_privacy = driver.find_element(By.XPATH,
-                                                '//*[@id="QA0Szd"]/div/div/div[1]/div[2]/div/div[1]/div/div/div['
-                                                '2]/div/div[1]/div[2]/div/div[1]/span/span/span/span[2]/span/span'
-                                                )
+            price_privacy = driver.find_element(
+                By.XPATH,
+                '//*[@id="QA0Szd"]/div/div/div[1]/div[2]/div/div[1]/div/div/div['
+                "2]/div/div[1]/div[2]/div/div[1]/span/span/span/span[2]/span/span",
+            )
 
             price_privacy_text = price_privacy.text
         except Exception:
@@ -355,11 +387,13 @@ class GoogleMaps:
         """
 
         try:
-            category = driver.find_element(By.CSS_SELECTOR,
-                                           '#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div > '
-                                           'div.e07Vkf.kA9KIf > div > div > div.TIHn2 > div > div.lMbq3e '
-                                           '> '
-                                           'div.LBgpqf > div > div:nth-child(2) > span > span > button')
+            category = driver.find_element(
+                By.CSS_SELECTOR,
+                "#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div > "
+                "div.e07Vkf.kA9KIf > div > div > div.TIHn2 > div > div.lMbq3e "
+                "> "
+                "div.LBgpqf > div > div:nth-child(2) > span > span > button",
+            )
             category_text = category.text
 
         except Exception:
@@ -375,7 +409,7 @@ class GoogleMaps:
         """
 
         try:
-            address = driver.find_element(By.CLASS_NAME, 'rogA2c')
+            address = driver.find_element(By.CLASS_NAME, "rogA2c")
             address_text = address.text
         except Exception:
             address_text = self._unavailable_text
@@ -390,9 +424,14 @@ class GoogleMaps:
         """
 
         try:
-            driver.find_element(By.CSS_SELECTOR, 'div.OqCZI.fontBodyMedium.WVXvdc > div.OMl5r.hH0dDd.jBYmhd').click()
+            driver.find_element(
+                By.CSS_SELECTOR,
+                "div.OqCZI.fontBodyMedium.WVXvdc > div.OMl5r.hH0dDd.jBYmhd",
+            ).click()
 
-            working_hours = driver.find_element(By.CSS_SELECTOR, 'div.t39EBf.GUrTXd > div > table')
+            working_hours = driver.find_element(
+                By.CSS_SELECTOR, "div.t39EBf.GUrTXd > div > table"
+            )
             working_hours_text = working_hours.text.strip().split("\n")
             working_hours_text = [x.strip() for x in working_hours_text if x]
             working_hours_text = ",".join(working_hours_text)
@@ -409,8 +448,10 @@ class GoogleMaps:
         """
 
         try:
-            menu_link = driver.find_element(By.CSS_SELECTOR,
-                                            'div.UCw5gc > div > div:nth-child(1) > a[data-tooltip="Open menu link"]')
+            menu_link = driver.find_element(
+                By.CSS_SELECTOR,
+                'div.UCw5gc > div > div:nth-child(1) > a[data-tooltip="Open menu link"]',
+            )
             menu_link_href = menu_link.get_attribute("href")
 
         except Exception as e:
@@ -426,8 +467,11 @@ class GoogleMaps:
         """
 
         try:
-            website = driver.find_element(By.CSS_SELECTOR, 'div.UCw5gc > div > div:nth-child(1) > a['
-                                                           'data-tooltip="Open website"]')
+            website = driver.find_element(
+                By.CSS_SELECTOR,
+                "div.UCw5gc > div > div:nth-child(1) > a["
+                'data-tooltip="Open website"]',
+            )
             website_href = website.get_attribute("href")
 
         except Exception as e:
@@ -443,11 +487,16 @@ class GoogleMaps:
         """
 
         try:
-            phone = driver.find_elements(By.CLASS_NAME, 'rogA2c')
+            phone = driver.find_elements(By.CLASS_NAME, "rogA2c")
             try:
                 for ph in phone:
-                    ph_text = ph.text.replace("(", "").replace(")", "").replace(" ", "").replace("+", "").replace("-",
-                                                                                                                  "")
+                    ph_text = (
+                        ph.text.replace("(", "")
+                        .replace(")", "")
+                        .replace(" ", "")
+                        .replace("+", "")
+                        .replace("-", "")
+                    )
                     if ph_text.isnumeric():
                         phone = ph
 
@@ -470,7 +519,9 @@ class GoogleMaps:
         try:
             related_images = driver.find_elements(By.CLASS_NAME, "DaSXdd")
             if related_images:
-                related_images_src = [image.get_attribute("src") for image in related_images]
+                related_images_src = [
+                    image.get_attribute("src") for image in related_images
+                ]
                 related_images_data = ",".join(related_images_src)
             else:
                 related_images_data = self._unavailable_text
@@ -488,24 +539,36 @@ class GoogleMaps:
         """
 
         try:
-            driver.find_element(By.CSS_SELECTOR, '#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div > '
-                                                 'div.e07Vkf.kA9KIf > div > div > div:nth-child(3) > div > div > '
-                                                 'button:nth-child(3)').click()
+            driver.find_element(
+                By.CSS_SELECTOR,
+                "#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > div > "
+                "div.e07Vkf.kA9KIf > div > div > div:nth-child(3) > div > div > "
+                "button:nth-child(3)",
+            ).click()
 
-            self._wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#QA0Szd > div > div > '
-                                                                              'div.w6VYqd > div.bJzME.tTVLSc '
-                                                                              '> div > div.e07Vkf.kA9KIf > '
-                                                                              'div > div > '
-                                                                              'div.m6QErb.DxyBCb.kA9KIf.dS8AEf')))
+            self._wait.until(
+                EC.presence_of_element_located(
+                    (
+                        By.CSS_SELECTOR,
+                        "#QA0Szd > div > div > "
+                        "div.w6VYqd > div.bJzME.tTVLSc "
+                        "> div > div.e07Vkf.kA9KIf > "
+                        "div > div > "
+                        "div.m6QErb.DxyBCb.kA9KIf.dS8AEf",
+                    )
+                )
+            )
 
             # about_data = driver.find_elements(By.CSS_SELECTOR, 'div.iP2t7d.fontBodyMedium')
             about_dict = {}
             try:
-                about_text = driver.find_element(By.CSS_SELECTOR,
-                                                 '#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > '
-                                                 'div > div.e07Vkf.kA9KIf > div > div > '
-                                                 'div.m6QErb.DxyBCb.kA9KIf.dS8AEf > div.PbZDve > p > '
-                                                 'span > span')
+                about_text = driver.find_element(
+                    By.CSS_SELECTOR,
+                    "#QA0Szd > div > div > div.w6VYqd > div.bJzME.tTVLSc > "
+                    "div > div.e07Vkf.kA9KIf > div > div > "
+                    "div.m6QErb.DxyBCb.kA9KIf.dS8AEf > div.PbZDve > p > "
+                    "span > span",
+                )
                 about_dict["about_desc"] = about_text.text
             except NoSuchElementException:
                 about_dict["about_desc"] = self._unavailable_text
@@ -551,14 +614,14 @@ class GoogleMaps:
         start_time = time()
         scroll_wait = 1
         while True:
-            results = driver.find_elements(By.CLASS_NAME, 'hfpxzc')
+            results = driver.find_elements(By.CLASS_NAME, "hfpxzc")
             if self._results_range:
                 if len(results) >= self._results_range:
-                    temp_results = results[:self._results_range + 1]
+                    temp_results = results[: self._results_range + 1]
                     results = temp_results
                     break
 
-            driver.execute_script('arguments[0].scrollIntoView(true);', results[-1])
+            driver.execute_script("arguments[0].scrollIntoView(true);", results[-1])
             driver.implicitly_wait(scroll_wait)
             try:
                 text_span = driver.find_element(By.CSS_SELECTOR, scroll_end)
@@ -573,8 +636,14 @@ class GoogleMaps:
 
         return results
 
-    def _scrape_result_and_store(self, driver: WebDriver, mode: str, result: any, query: str,
-                                 results_indices: list[int, int]):
+    def _scrape_result_and_store(
+        self,
+        driver: WebDriver,
+        mode: str,
+        result: any,
+        query: str,
+        results_indices: list[int, int],
+    ):
         """
         Scrape and store data from a search result.
             :param driver: The WebDriver instance.
@@ -588,99 +657,164 @@ class GoogleMaps:
 
         # latitude and longitude
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting Latitude and longitude", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting Latitude and longitude",
+                mode=mode,
+                results_indices=results_indices,
+            )
         lat, long, map_link = self.validate_result_link(result, driver)
 
         # get cover image
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting cover image", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting cover image",
+                mode=mode,
+                results_indices=results_indices,
+            )
         cover_image = self.get_cover_image()
 
         # get title
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting title", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting title",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_title = self.get_title(driver)
 
         # get rating
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting rating", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting rating",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_rating = self.get_rating_in_card(driver)
 
         # Get privacy price
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting privacy price", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting privacy price",
+                mode=mode,
+                results_indices=results_indices,
+            )
         privacy_price = self.get_privacy_price(driver)
 
         # get category
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting Category", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting Category",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_category = self.get_category(driver)
 
         # get address
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting Address", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting Address",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_address = self.get_address(driver)
 
         # get working hours
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting Working hours", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting Working hours",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_hours = self.get_working_hours(driver)
 
         # get menu link
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting Menu Links", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting Menu Links",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_menu_link = self.get_menu_link(driver)
 
         # get website link
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting WebLink", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting WebLink",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_website_link = self.get_website_link(driver)
 
         # get website data
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting WebLink Data", mode=mode,
-                                        results_indices=results_indices)
-        website_data = self._web_pattern_scraper.find_patterns(driver, card_website_link, self._suggested_ext,
-                                                               self._unavailable_text)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting WebLink Data",
+                mode=mode,
+                results_indices=results_indices,
+            )
+        website_data = self._web_pattern_scraper.find_patterns(
+            driver, card_website_link, self._suggested_ext, self._unavailable_text
+        )
 
         # get phone number
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting Phone Number", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting Phone Number",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_phone_number = self.get_phone_number(driver)
 
         # get card images
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting Images links", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting Images links",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_related_images = self.get_related_images_list(driver)
 
         # get card about
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Getting About data", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Getting About data",
+                mode=mode,
+                results_indices=results_indices,
+            )
         card_about = self.get_about_description(driver)
 
         # Reset driver again
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Resetting Driver", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Resetting Driver",
+                mode=mode,
+                results_indices=results_indices,
+            )
         self.reset_driver_for_next_run(result, driver)
 
         # Store scrapped data
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Storing Data in List", mode=mode,
-                                        results_indices=results_indices)
+            self._print.print_with_lock(
+                query=query,
+                status="Storing Data in List",
+                mode=mode,
+                results_indices=results_indices,
+            )
 
         temp_data["title"] = card_title
         temp_data["map_link"] = map_link
@@ -706,7 +840,9 @@ class GoogleMaps:
         # Store data in runtime
         temp_list = [temp_data]
         if self._verbose:
-            self._print.print_with_lock(query=query, status="Dumping data in CSV file", mode=mode)
+            self._print.print_with_lock(
+                query=query, status="Dumping data in CSV file", mode=mode
+            )
         self._csv_creator.create_csv(list_of_dict_data=temp_list)
 
     def start_scrapper(self, query: str) -> None:
@@ -722,14 +858,20 @@ class GoogleMaps:
 
         try:
             if self._verbose:
-                self._print.print_with_lock(query=query, status="Initializing Browser", mode=mode)
+                self._print.print_with_lock(
+                    query=query, status="Initializing Browser", mode=mode
+                )
             else:
-                self._print.print_with_lock(query=query, status="Running the script", mode=mode)
+                self._print.print_with_lock(
+                    query=query, status="Running the script", mode=mode
+                )
 
             driver = self.create_chrome_driver()
 
             if self._verbose:
-                self._print.print_with_lock(query=query, status="Loading URL", mode=mode)
+                self._print.print_with_lock(
+                    query=query, status="Loading URL", mode=mode
+                )
 
             if "http" in query.lower().strip():
                 self.load_url(driver, query)
@@ -737,14 +879,18 @@ class GoogleMaps:
                 self.load_url(driver, self._maps_url)
 
             if self._verbose:
-                self._print.print_with_lock(query=query, status="Searching query", mode=mode)
+                self._print.print_with_lock(
+                    query=query, status="Searching query", mode=mode
+                )
 
             if "http" not in query:
                 self.search_query(query)
             self._main_handler = driver.current_window_handle
 
             if self._verbose:
-                self._print.print_with_lock(query=query, status="Loading Links from GMAPS", mode=mode)
+                self._print.print_with_lock(
+                    query=query, status="Loading Links from GMAPS", mode=mode
+                )
 
             # load all the results
             results = self.scroll_to_the_end_event(driver)
@@ -754,27 +900,23 @@ class GoogleMaps:
                 if self._stop_event.is_set():
                     break
                 # Scrape and store data
-                self._scrape_result_and_store(driver=driver, mode=mode, result=result, query=query,
-                                              results_indices=result_indices)
+                self._scrape_result_and_store(
+                    driver=driver,
+                    mode=mode,
+                    result=result,
+                    query=query,
+                    results_indices=result_indices,
+                )
                 result_indices[1] += 1
 
             if self._verbose:
-                self._print.print_with_lock(query=query, status="Driver Closed", mode=mode)
+                self._print.print_with_lock(
+                    query=query, status="Driver Closed", mode=mode
+                )
             driver.close()
-            # Clean the data
-            # if self._verbose:
-            #     self._print.print_with_lock(query=query, status="Cleaning Collected Data", mode=mode)
-            # scrapped_data_list = self._dict_cleaner.start_cleaning_dict_data(scrapped_data_list)
 
-            # Create a csv file
-            # if self._verbose:
-            #     self._print.print_with_lock(query=query, status="Dumping data in CSV file", mode=mode)
-            # self._csv_creator.create_csv(list_of_dict_data=scrapped_data_list, query=query)
         except NoSuchWindowException:
             if self._verbose:
-                self._print.print_with_lock(query=query, status="Browser Closed", mode=mode)
-
-# if __name__ == '__main__':
-#     App = GoogleMaps()
-#     # App.start_scrapper("Girl & The Goat")
-#     App.start_scrapper("restaurants near me")
+                self._print.print_with_lock(
+                    query=query, status="Browser Closed", mode=mode
+                )
