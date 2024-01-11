@@ -2,7 +2,7 @@ from os import mkdir
 from os.path import exists
 from random import choice
 from threading import Event, Lock
-from time import time
+from time import time, sleep
 
 from selenium.common.exceptions import (NoSuchElementException,
                                         NoSuchWindowException,
@@ -102,7 +102,7 @@ class GoogleMaps:
             Start the scraping process for a given query.
     """
 
-    _maps_url = "https://www.google.com/maps"
+    _maps_url = "https://www.google.com/maps?hl=en"
     _finger_print_defender_ext = "./extensions/finger_print_defender.crx"
 
     def __init__(
@@ -193,8 +193,9 @@ class GoogleMaps:
         options.add_argument("--disable-setgid-sandbox")
         options.add_argument("--no-sandbox")
         options.add_argument("--no-first-run")
+        options.add_argument("--lang=en-US")
 
-        options.add_argument("--title=Developer - Abdul Moez")
+        options.add_argument("--title=Developer - KVasilkov")
         options.add_extension(self._finger_print_defender_ext)
 
         # Set Chrome options to prevent fingerprinting
@@ -834,11 +835,11 @@ class GoogleMaps:
         temp_data["latitude"] = lat
         temp_data["longitude"] = long
 
-        # pattern evaluation of website
-        temp_data.update(website_data)
-
-        # store about related data
-        temp_data.update(card_about)
+        if self._do_additional_search:
+            # pattern evaluation of website
+            temp_data.update(website_data)
+            # store about related data
+            temp_data.update(card_about)
 
         # Store data in runtime
         temp_list = [temp_data]

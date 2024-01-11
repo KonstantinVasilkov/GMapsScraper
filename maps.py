@@ -82,7 +82,7 @@ class GMapsScraper:
             "--output-folder",
             help="Output folder to store CSV details (default: ./RESULTING_CSV_FILES)",
             type=str,
-            default="./CSV_FILES",
+            default="./RESULTING_CSV_FILES",
         )
         parser.add_argument(
             "-d",
