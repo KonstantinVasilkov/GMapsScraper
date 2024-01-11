@@ -29,7 +29,7 @@ class GMapsScraper:
         parser.add_argument('-wb', '--windowed-browser', help='Disable headless mode', action='store_false',
                             default=True)
         parser.add_argument('-v', '--verbose', help='Enable verbose mode', action='store_true')
-        parser.add_argument('-o', '--output-folder', help='Output folder to store CSV details (default: ./CSV_FILES)',
+        parser.add_argument('-o', '--output-folder', help='Output folder to store CSV details (default: ./RESULTING_CSV_FILES)',
                             type=str, default='./CSV_FILES')
         parser.add_argument('-d', '--driver-path',
                             help='Path to Chrome driver (if not provided, it will be downloaded)', type=str,
